@@ -1,0 +1,4 @@
+pyspark>=3.0.0
+h3>=3.7.0
+Shapely>=1.7.0
+pytest>=6.0.0
