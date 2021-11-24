@@ -353,7 +353,8 @@ class TestLib(unittest.TestCase):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_origin_h3_index_from_unidirectional_edge)
 
         actual = df.withColumn(
-            "actual", h3_pyspark.get_origin_h3_index_from_unidirectional_edge(*h3_pyspark_test_args),
+            "actual",
+            h3_pyspark.get_origin_h3_index_from_unidirectional_edge(*h3_pyspark_test_args),
         )
         actual = actual.collect()[0]["actual"]
         expected = h3_pyspark.sanitize_types(h3.get_origin_h3_index_from_unidirectional_edge(*h3_test_args))
@@ -363,7 +364,8 @@ class TestLib(unittest.TestCase):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_destination_h3_index_from_unidirectional_edge)
 
         actual = df.withColumn(
-            "actual", h3_pyspark.get_destination_h3_index_from_unidirectional_edge(*h3_pyspark_test_args),
+            "actual",
+            h3_pyspark.get_destination_h3_index_from_unidirectional_edge(*h3_pyspark_test_args),
         )
         actual = actual.collect()[0]["actual"]
         expected = h3_pyspark.sanitize_types(h3.get_destination_h3_index_from_unidirectional_edge(*h3_test_args))
@@ -372,7 +374,10 @@ class TestLib(unittest.TestCase):
     def test_get_h3_indexes_from_unidirectional_edge(self):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_indexes_from_unidirectional_edge)
 
-        actual = df.withColumn("actual", h3_pyspark.get_h3_indexes_from_unidirectional_edge(*h3_pyspark_test_args),)
+        actual = df.withColumn(
+            "actual",
+            h3_pyspark.get_h3_indexes_from_unidirectional_edge(*h3_pyspark_test_args),
+        )
         actual = actual.collect()[0]["actual"]
         expected = h3_pyspark.sanitize_types(h3.get_h3_indexes_from_unidirectional_edge(*h3_test_args))
         assert sort(actual) == sort(expected)
@@ -380,7 +385,10 @@ class TestLib(unittest.TestCase):
     def test_get_h3_unidirectional_edges_from_hexagon(self):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_unidirectional_edges_from_hexagon)
 
-        actual = df.withColumn("actual", h3_pyspark.get_h3_unidirectional_edges_from_hexagon(*h3_pyspark_test_args),)
+        actual = df.withColumn(
+            "actual",
+            h3_pyspark.get_h3_unidirectional_edges_from_hexagon(*h3_pyspark_test_args),
+        )
         actual = actual.collect()[0]["actual"]
         expected = h3_pyspark.sanitize_types(h3.get_h3_unidirectional_edges_from_hexagon(*h3_test_args))
         assert sort(actual) == sort(expected)
@@ -388,7 +396,10 @@ class TestLib(unittest.TestCase):
     def test_get_h3_unidirectional_edge_boundary(self):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_unidirectional_edge_boundary)
 
-        actual = df.withColumn("actual", h3_pyspark.get_h3_unidirectional_edge_boundary(*h3_pyspark_test_args),)
+        actual = df.withColumn(
+            "actual",
+            h3_pyspark.get_h3_unidirectional_edge_boundary(*h3_pyspark_test_args),
+        )
         actual = actual.collect()[0]["actual"]
         expected = h3_pyspark.sanitize_types(h3.get_h3_unidirectional_edge_boundary(*h3_test_args))
         assert sort(actual) == sort(expected)

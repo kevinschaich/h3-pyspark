@@ -4,6 +4,7 @@
         "uncompact",
         "conda",
         "geospatial",
-        "codecov"
+        "codecov",
+        "pytest"
     ]
 }
