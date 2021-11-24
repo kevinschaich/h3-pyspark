@@ -33,7 +33,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Lint with black
       run: |
-        black . -l 120 --check
+        black src tests -l 120 --check
     - name: Test with pytest
       run: |
         pytest
