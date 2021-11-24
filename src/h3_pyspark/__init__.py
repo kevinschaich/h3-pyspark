@@ -5,9 +5,9 @@ from inspect import getmembers, isfunction
 
 
 def sanitize_types(value):
-    '''
+    """
     PySpark does not support all the native types in Python, i.e. sets/tuples.
-    '''
+    """
     if isinstance(value, str) or isinstance(value, bool) or isinstance(value, int) or isinstance(value, float):
         return value
     if isinstance(value, set) or isinstance(value, tuple):
@@ -16,7 +16,7 @@ def sanitize_types(value):
         return [sanitize_types(v) for v in value]
     if isinstance(value, dict):
         return {k: sanitize_types(v) for k, v in value.items()}
-    
+
     return json.dumps(value)
 
 
