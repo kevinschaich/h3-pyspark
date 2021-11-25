@@ -2,7 +2,7 @@ import h3
 from pyspark.sql import functions as F, types as T
 import json
 from inspect import getmembers, isfunction
-from h3_pyspark.utils import sanitize_types
+from .utils import sanitize_types
 import sys
 
 
@@ -142,8 +142,8 @@ def h3_to_children(h, child_res):
 
 
 @F.udf(returnType=T.StringType())
-def h3_to_center_child(h3, child_res):
-    return sanitize_types(h3.h3_to_center_child(h3, child_res))
+def h3_to_center_child(h, child_res):
+    return sanitize_types(h3.h3_to_center_child(h, child_res))
 
 
 @F.udf(returnType=T.ArrayType(T.StringType()))
@@ -250,8 +250,8 @@ def num_hexagons(res):
 
 
 @F.udf(returnType=T.ArrayType(T.StringType()))
-def get_res0_indexes(res):
-    return sanitize_types(h3.get_res0_indexes(res))
+def get_res0_indexes():
+    return sanitize_types(h3.get_res0_indexes())
 
 
 @F.udf(returnType=T.ArrayType(T.StringType()))
