@@ -7,7 +7,7 @@
 [![conda](https://img.shields.io/conda/vn/conda-forge/h3-pyspark.svg)](https://anaconda.org/conda-forge/h3-pyspark)
 [![version](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/kevinschaich/h3-pyspark/blob/master/LICENSE)
 
-[![Test](https://github.com/kevinschaich/h3-pyspark/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/kevinschaich/h3-pyspark/actions/workflows/test.yml)
+[![Tests](https://github.com/kevinschaich/h3-pyspark/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/kevinschaich/h3-pyspark/actions/workflows/tests.yml)
 <!-- [![codecov](https://codecov.io/gh/kevinschaich/h3-pyspark/branch/master/graph/badge.svg)](https://codecov.io/gh/kevinschaich/h3-pyspark) -->
 
 PySpark bindings for the [H3 core library](https://h3geo.org/).
