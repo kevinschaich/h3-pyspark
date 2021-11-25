@@ -49,3 +49,13 @@ conda install h3-pyspark
 |37.769377|-122.388903|         9|89283082e73ffff|
 +---------+-----------+----------+---------------+
 ```
+
+## Publishing
+
+1. Bump version in `setup.cfg`
+2. Publish:
+
+```bash
+python3 -m build
+python3 -m twine upload --repository pypi dist/*
+```
