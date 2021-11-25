@@ -225,22 +225,22 @@ def get_h3_unidirectional_edge_boundary(h, geo_json=False):
 
 
 @F.udf(returnType=T.DoubleType())
-def hex_area(res, unit='m^2'):
+def hex_area(res, unit="m^2"):
     return sanitize_types(h3.hex_area(res, unit))
 
 
 @F.udf(returnType=T.DoubleType())
-def cell_area(h, unit='m^2'):
+def cell_area(h, unit="m^2"):
     return sanitize_types(h3.cell_area(h, unit))
 
 
 @F.udf(returnType=T.DoubleType())
-def edge_length(res, unit='m'):
+def edge_length(res, unit="m"):
     return sanitize_types(h3.edge_length(res, unit))
 
 
 @F.udf(returnType=T.DoubleType())
-def exact_edge_length(res, unit='m'):
+def exact_edge_length(res, unit="m"):
     return sanitize_types(h3.exact_edge_length(res, unit))
 
 
@@ -260,7 +260,7 @@ def get_pentagon_indexes(res):
 
 
 @F.udf(returnType=T.DoubleType())
-def point_dist(point1, point2, unit='m'):
+def point_dist(point1, point2, unit="m"):
     return sanitize_types(h3.point_dist(point1, point2, unit))
 
 
