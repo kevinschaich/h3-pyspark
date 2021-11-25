@@ -2,7 +2,8 @@ import h3
 from pyspark.sql import functions as F, types as T
 import json
 from inspect import getmembers, isfunction
-from utils import sanitize_types
+from h3_pyspark.utils import sanitize_types
+import sys
 
 
 ###############################################################################
@@ -263,7 +264,10 @@ def point_dist(point1, point2, unit='m'):
     return sanitize_types(h3.point_dist(point1, point2, unit))
 
 
-functions = getmembers(__package__, isfunction)
-print(functions)
-for f in functions:
-    f.__doc__ = """My Doc string"""
+# Steal docstrings from h3-py native bindings if they exist
+for f in [f[1] for f in getmembers(sys.modules[__name__], isfunction)]:
+    try:
+        h3_f = getattr(h3, f.__name__)
+        f.__doc__ = h3_f.__doc__
+    except Exception:
+        f.__doc__ = f.__doc__
