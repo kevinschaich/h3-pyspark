@@ -24,7 +24,12 @@ def h3_to_geo(h):
 
 @F.udf(returnType=T.ArrayType(T.ArrayType(T.DoubleType())))
 def h3_to_geo_boundary(h, geo_json):
-    return sanitize_types(h3.h3_to_geo_boundary(h, geo_json))
+    # NOTE: this behavior differs from default
+    # h3-pyspark return type will be a valid GeoJSON string if geo_json is set to True
+    coordinates = h3.h3_to_geo_boundary(h, geo_json)
+    if geo_json:
+        return sanitize_types(json.dumps({'type': 'MultiPolygon', 'coordinates': coordinates}))
+    return sanitize_types(coordinates)
 
 
 ###############################################################################
@@ -163,7 +168,7 @@ def uncompact(hexes, res):
 
 
 @F.udf(returnType=T.ArrayType(T.StringType()))
-def polyfill(polygons, res, geo_json_conformant=False):
+def polyfill(polygons, res, geo_json_conformant):
     # NOTE: this behavior differs from default
     # h3-pyspark expect `polygons` argument to be a valid GeoJSON string
     polygons = json.loads(polygons)
@@ -171,7 +176,7 @@ def polyfill(polygons, res, geo_json_conformant=False):
 
 
 @F.udf(returnType=T.StringType())
-def h3_set_to_multi_polygon(hexes, geo_json=False):
+def h3_set_to_multi_polygon(hexes, geo_json):
     # NOTE: this behavior differs from default
     # h3-pyspark return type will be a valid GeoJSON string if geo_json is set to True
     coordinates = h3.h3_set_to_multi_polygon(hexes, geo_json)
@@ -221,7 +226,7 @@ def get_h3_unidirectional_edges_from_hexagon(h):
 
 
 @F.udf(returnType=T.ArrayType(T.ArrayType(T.DoubleType())))
-def get_h3_unidirectional_edge_boundary(h, geo_json=False):
+def get_h3_unidirectional_edge_boundary(h, geo_json):
     return sanitize_types(h3.get_h3_unidirectional_edge_boundary(h, geo_json))
 
 
@@ -231,22 +236,22 @@ def get_h3_unidirectional_edge_boundary(h, geo_json=False):
 
 
 @F.udf(returnType=T.DoubleType())
-def hex_area(res, unit="m^2"):
+def hex_area(res, unit):
     return sanitize_types(h3.hex_area(res, unit))
 
 
 @F.udf(returnType=T.DoubleType())
-def cell_area(h, unit="m^2"):
+def cell_area(h, unit):
     return sanitize_types(h3.cell_area(h, unit))
 
 
 @F.udf(returnType=T.DoubleType())
-def edge_length(res, unit="m"):
+def edge_length(res, unit):
     return sanitize_types(h3.edge_length(res, unit))
 
 
 @F.udf(returnType=T.DoubleType())
-def exact_edge_length(res, unit="m"):
+def exact_edge_length(res, unit):
     return sanitize_types(h3.exact_edge_length(res, unit))
 
 
@@ -266,7 +271,7 @@ def get_pentagon_indexes(res):
 
 
 @F.udf(returnType=T.DoubleType())
-def point_dist(point1, point2, unit="m"):
+def point_dist(point1, point2, unit):
     return sanitize_types(h3.point_dist(point1, point2, unit))
 
 
