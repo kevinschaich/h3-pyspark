@@ -104,7 +104,7 @@ class TestCore(unittest.TestCase):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_geo_boundary)
 
         actual = df.withColumn("actual", h3_pyspark.h3_to_geo_boundary(*h3_pyspark_test_args))
-        actual = actual.collect()[0]["actual"]
+        actual = json.dumps({"type": "MultiPolygon", "coordinates": actual.collect()[0]["actual"]})
         expected = sanitize_types(h3.h3_to_geo_boundary(*h3_test_args))
         assert sort(actual) == sort(expected)
 
@@ -320,7 +320,7 @@ class TestCore(unittest.TestCase):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_set_to_multi_polygon)
 
         actual = df.withColumn("actual", h3_pyspark.h3_set_to_multi_polygon(*h3_pyspark_test_args))
-        actual = actual.collect()[0]["actual"]
+        actual = json.dumps({"type": "MultiPolygon", "coordinates": actual.collect()[0]["actual"]})
         expected = sanitize_types(h3.h3_set_to_multi_polygon(*h3_test_args))
         assert sort(actual) == sort(expected)
 
