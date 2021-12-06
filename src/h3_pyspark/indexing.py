@@ -68,16 +68,16 @@ def _index_shape_object(shape: geometry, resolution: int):
 
     try:
         if isinstance(shape, Point):
-            result_set = result_set.union(_index_point_object(shape, resolution))  # noqa
+            result_set.update(_index_point_object(shape, resolution))  # noqa
 
         elif isinstance(shape, LineString):
-            result_set = result_set.union(_index_line_object(shape, resolution))  # noqa
+            result_set.update(_index_line_object(shape, resolution))  # noqa
 
         elif isinstance(shape, Polygon):
-            result_set = result_set.union(_index_polygon_object(shape, resolution))  # noqa
+            result_set.update(_index_polygon_object(shape, resolution))  # noqa
 
         elif isinstance(shape, MultiPoint) or isinstance(shape, MultiLineString) or isinstance(shape, MultiPolygon):
-            result_set = result_set.union(*[_index_shape_object(s, resolution) for s in shape.geoms])
+            result_set.update(*[_index_shape_object(s, resolution) for s in shape.geoms])
         else:
             raise ValueError(f"Unsupported geometry_type {shape.geom_type}")
 
