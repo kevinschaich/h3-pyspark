@@ -121,7 +121,7 @@ def index_shape(geometry: Column, resolution: Column):
     input features, and returns the set of H3 cells at the specified resolution which completely cover them
     (could be more than one cell for a substantially large geometry and substantially granular resolution).
 
-    The schema of the output type will be `T.ArrayType(T.StringType())`, where each value in the array is an H3 cell.
+    The schema of the output column will be `T.ArrayType(T.StringType())`, where each value in the array is an H3 cell.
     
     This spatial index can then be used for bucketing, clustering, and joins in Spark via an `explode()` operation.
     """
