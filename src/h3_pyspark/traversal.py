@@ -18,7 +18,7 @@ def _k_ring_distinct(cells: List[str], distance: int = 1):
 def k_ring_distinct(cells: Column, distance: Column):
     """
     Perform a k-ring operation on every input cell and return the distinct set of output cells.
-    
+
     The schema of the output column will be `T.ArrayType(T.StringType())`, where each value in the array is an H3 cell.
     """
     return _k_ring_distinct(cells, distance)

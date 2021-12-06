@@ -28,7 +28,7 @@ def h3_to_geo_boundary(h, geo_json):
     # h3-pyspark return type will be a valid GeoJSON string if geo_json is set to True
     coordinates = h3.h3_to_geo_boundary(h, geo_json)
     if geo_json:
-        return sanitize_types(json.dumps({'type': 'MultiPolygon', 'coordinates': coordinates}))
+        return sanitize_types(json.dumps({"type": "MultiPolygon", "coordinates": coordinates}))
     return sanitize_types(coordinates)
 
 
@@ -181,7 +181,7 @@ def h3_set_to_multi_polygon(hexes, geo_json):
     # h3-pyspark return type will be a valid GeoJSON string if geo_json is set to True
     coordinates = h3.h3_set_to_multi_polygon(hexes, geo_json)
     if geo_json:
-        return sanitize_types(json.dumps({'type': 'MultiPolygon', 'coordinates': coordinates}))
+        return sanitize_types(json.dumps({"type": "MultiPolygon", "coordinates": coordinates}))
     return sanitize_types(coordinates)
 
 
