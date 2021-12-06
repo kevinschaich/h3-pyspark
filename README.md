@@ -93,7 +93,7 @@ This spatial index can then be used for bucketing, clustering, and joins in Spar
 +----------------------+----------+------------------------------------+
 ```
 
-Optionally, add another column `h3_9_geometry` for the GeoJSON representation of each cell in the `h3_9` column:
+Optionally, add another column `h3_9_geometry` for the GeoJSON representation of each cell in the `h3_9` column to easily map the result alongside your original input geometry:
 
 ```python
 >>> df = df.withColumn('h3_9_geometry', h3_pyspark.h3_set_to_multi_polygon(F.col('h3_9'), F.lit(True)))
@@ -105,7 +105,7 @@ Optionally, add another column `h3_9_geometry` for the GeoJSON representation of
 +--------------------+----------+--------------------+--------------------+
 ```
 
-<script src="https://embed.githubusercontent.com/view/geojson/kevinschaich/h3-pyspark/ks-extension/docs/spatial_index.geojson"></script>
+[![Result](docs/spatial_index.png)](docs/spatial_index.geojson)
 
 ### Traversal
 
