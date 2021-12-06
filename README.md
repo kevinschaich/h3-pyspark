@@ -172,7 +172,11 @@ Once we have an indexed version of our geometries, we can easily join on the str
 +---------------+--------------------+----------+--------------------+-------------+
 ```
 
-You can combine this technique with a [Buffer](#buffers) to do a distance join.
+You can combine this technique with a [Buffer](#buffers) to do a **Distance Join**.
+
+[View Live Map on GitHub](docs/spatial_join.geojson)
+
+[![Result](docs/spatial_join.png)](docs/spatial_join.geojson)
 
 ## Publishing
 
