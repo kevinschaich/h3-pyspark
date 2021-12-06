@@ -1,0 +1,52 @@
+{% set name = "h3-pyspark" %}
+{% set version = "1.0.0" %}
+
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/h3-pyspark-{{ version }}.tar.gz
+  sha256: 0989ae24774088e59f0de043da2d5ad214fd5b6e31034e7f0f07b45b82f4d214
+
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+
+requirements:
+  host:
+    - pip
+    - python >=3.6
+  run:
+    - python >=3.6
+    - pyspark >=3.0.0
+    - h3 >=3.7.0
+    - Shapely >=1.7.0
+
+test:
+  imports:
+    - h3_pyspark
+  commands:
+    - pip check
+    - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    - black -l 120 --check --diff src tests
+    - pytest
+  requires:
+    - pip
+    - pyspark >=3.0.0
+    - h3 >=3.7.0
+    - Shapely >=1.7.0
+    - pytest >=6.0.0
+    - black >=21.11b1
+
+about:
+  home: https://github.com/kevinschaich/h3-pyspark
+  summary: PySpark bindings for H3, a hierarchical hexagonal geospatial indexing system
+  license: Apache-2.0
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - kevinschaich

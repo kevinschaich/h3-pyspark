@@ -9,7 +9,7 @@ def _k_ring_distinct(cells: List[str], distance: int = 1):
     Perform a k-ring operation on every input cell and return the distinct set of output cells.
     """
     result_set = set(cells)
-    result_set = result_set.union(*[h3.k_ring(c, distance) for c in result_set])  # noqa
+    result_set = result_set.union(*[h3.k_ring(c, distance) for c in result_set])
 
     return list(result_set)
 

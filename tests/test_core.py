@@ -466,8 +466,6 @@ class TestCore(unittest.TestCase):
     def test_get_res0_indexes(self):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_res0_indexes)
 
-        print("ARGSSSS", h3_test_args, h3_pyspark_test_args)
-
         actual = df.withColumn("actual", h3_pyspark.get_res0_indexes(*h3_pyspark_test_args))
         actual = actual.collect()[0]["actual"]
         expected = sanitize_types(h3.get_res0_indexes(*h3_test_args))
