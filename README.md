@@ -139,6 +139,41 @@ Since [we know the edge length & diameter (`2 * edge length`) of each H3 cell re
 
 [![Result](docs/buffer.png)](docs/buffer.geojson)
 
+### Spatial Joins
+
+Once we have an indexed version of our geometries, we can easily join on the string column in H3 to get a set of pair candidates:
+
+```python
+>>> from pyspark.sql import SparkSession, functions as F
+>>> from h3_pyspark.indexing import index_shape
+>>> spark = SparkSession.builder.getOrCreate()
+>>>
+>>> left = spark.createDataFrame([{
+        'id': 'left_point',
+        'geometry': '{ "type": "Point", "coordinates": [ -80.79527020454407, 32.132884966083935 ] }',
+    }])
+>>> right = spark.createDataFrame([{
+        'id': 'right_polygon',
+        'geometry': '{ "type": "Polygon", "coordinates": [ [ [ -80.80022692680359, 32.12864200501338 ], [ -80.79224467277527, 32.12864200501338 ], [ -80.79224467277527, 32.13378441213715 ], [ -80.80022692680359, 32.13378441213715 ], [ -80.80022692680359, 32.12864200501338 ] ] ] }',
+    }])
+>>>
+>>> left = left.withColumn('h3_9', index_shape('geometry', F.lit(9)))
+>>> right = right.withColumn('h3_9', index_shape('geometry', F.lit(9)))
+>>>
+>>> left = left.withColumn('h3_9', F.explode('h3_9'))
+>>> right = right.withColumn('h3_9', F.explode('h3_9'))
+>>>
+>>> joined = left.join(right, on='h3_9', how='inner')
+>>> joined.show()
++---------------+--------------------+----------+--------------------+-------------+
+|           h3_9|            geometry|        id|            geometry|           id|
++---------------+--------------------+----------+--------------------+-------------+
+|8944d55100fffff|{ "type": "Point"...|left_point|{ "type": "Polygo...|right_polygon|
++---------------+--------------------+----------+--------------------+-------------+
+```
+
+You can combine this technique with a [Buffer](#buffers) to do a distance join.
+
 ## Publishing
 
 1. Bump version in `setup.cfg`
