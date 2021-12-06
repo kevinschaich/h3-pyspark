@@ -22,7 +22,7 @@ def h3_to_geo(h):
     return sanitize_types(h3.h3_to_geo(h))
 
 
-@F.udf(returnType=T.ArrayType(T.ArrayType(T.DoubleType())))
+@F.udf(returnType=T.StringType())
 def h3_to_geo_boundary(h, geo_json):
     # NOTE: this behavior differs from default
     # h3-pyspark return type will be a valid GeoJSON string if geo_json is set to True
