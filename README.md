@@ -111,7 +111,7 @@ Takes in an array of input cells, perform a k-ring operation on each cell, and r
 
 The schema of the output column will be `T.ArrayType(T.StringType())`, where each value in the array is an H3 cell.
 
-Since [we know the edge length & diameter (`2 * edge length`) of each H3 cell resolution](https://h3geo.org/docs/core-library/restable), we can use this to efficiently generate a "buffered" version of our input geometry (useful for operations such as distance joins):
+Since [we know the edge length & diameter (`2 * edge length`) of each H3 cell resolution](https://h3geo.org/docs/core-library/restable), we can use this to efficiently generate a "buffered" index of our input geometry (useful for operations such as distance joins):
 
 ```python
 >>> from pyspark.sql import SparkSession, functions as F
