@@ -4,6 +4,7 @@ import json
 from inspect import getmembers, isfunction
 from .utils import sanitize_types
 import sys
+from shapely import geometry
 
 
 ###############################################################################
@@ -22,7 +23,7 @@ def h3_to_geo(h):
 
 
 @F.udf(returnType=T.ArrayType(T.ArrayType(T.DoubleType())))
-def h3_to_geo_boundary(h, geo_json=False):
+def h3_to_geo_boundary(h, geo_json):
     return sanitize_types(h3.h3_to_geo_boundary(h, geo_json))
 
 
@@ -169,9 +170,14 @@ def polyfill(polygons, res, geo_json_conformant=False):
     return sanitize_types(h3.polyfill(polygons, res, geo_json_conformant))
 
 
-@F.udf(returnType=T.ArrayType(T.ArrayType(T.ArrayType(T.ArrayType(T.DoubleType())))))
+@F.udf(returnType=T.StringType())
 def h3_set_to_multi_polygon(hexes, geo_json=False):
-    return sanitize_types(h3.h3_set_to_multi_polygon(hexes, geo_json))
+    # NOTE: this behavior differs from default
+    # h3-pyspark return type will be a valid GeoJSON string if geo_json is set to True
+    coordinates = h3.h3_set_to_multi_polygon(hexes, geo_json)
+    if geo_json:
+        return sanitize_types(json.dumps({'type': 'MultiPolygon', 'coordinates': coordinates}))
+    return sanitize_types(coordinates)
 
 
 ###############################################################################

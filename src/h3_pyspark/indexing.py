@@ -10,7 +10,7 @@ from shapely.geometry import (
     Polygon,
     MultiPolygon,
 )
-from pyspark.sql import functions as F
+from pyspark.sql import functions as F, types as T
 
 
 def _index_point_object(point: Point, resolution: int):
@@ -49,12 +49,18 @@ def _index_polygon_object(polygon: Polygon, resolution: int):
     """
     result_set = set()
     # Hexes for vertices
-    vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(polygon.exterior.coords)]
+    vertex_hexes = [
+        h3.geo_to_h3(t[1], t[0], resolution) for t in list(polygon.exterior.coords)
+    ]
     # Hexes for edges (inclusive of vertices)
     for i in range(len(vertex_hexes) - 1):
         result_set.update(h3.h3_line(vertex_hexes[i], vertex_hexes[i + 1]))
     # Hexes for internal area
-    result_set.update(list(h3.polyfill(geometry.mapping(polygon), resolution, geo_json_conformant=True)))
+    result_set.update(
+        list(
+            h3.polyfill(geometry.mapping(polygon), resolution, geo_json_conformant=True)
+        )
+    )
     return result_set
 
 
@@ -76,8 +82,14 @@ def _index_shape_object(shape: geometry, resolution: int):
         elif isinstance(shape, Polygon):
             result_set.update(_index_polygon_object(shape, resolution))
 
-        elif isinstance(shape, MultiPoint) or isinstance(shape, MultiLineString) or isinstance(shape, MultiPolygon):
-            result_set.update(*[_index_shape_object(s, resolution) for s in shape.geoms])
+        elif (
+            isinstance(shape, MultiPoint)
+            or isinstance(shape, MultiLineString)
+            or isinstance(shape, MultiPolygon)
+        ):
+            result_set.update(
+                *[_index_shape_object(s, resolution) for s in shape.geoms]
+            )
         else:
             raise ValueError(f"Unsupported geometry_type {shape.geom_type}")
 
@@ -100,11 +112,17 @@ def _index_shape(shape: str, resolution: int):
     return _index_shape_object(shape, resolution)
 
 
-@F.udf
+@F.udf(T.ArrayType(T.StringType()))
 def index_shape(geometry: Column, resolution: Column):
     """
-    Generate H3 spatial index for input geometry.
+    Generate an H3 spatial index for an input GeoJSON geometry column.
 
-    Returns the set of H3 cells at the specified resolution which completely cover the input geometry.
+    This function accepts GeoJSON `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, and `MultiPolygon`
+    input features, and returns the set of H3 cells at the specified resolution which completely cover them
+    (could be more than one cell for a substantially large geometry and substantially granular resolution).
+
+    The schema of the output type will be `T.ArrayType(T.StringType())`, where each value in the array is an H3 cell.
+    
+    This spatial index can then be used for bucketing, clustering, and joins in Spark via an `explode()` operation.
     """
     return _index_shape(geometry, resolution)
