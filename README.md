@@ -155,16 +155,16 @@ Once we have an indexed version of our geometries, we can easily join on the str
 >>> spark = SparkSession.builder.getOrCreate()
 >>>
 >>> left = spark.createDataFrame([{
-        'id': 'left_point',
-        'geometry': '{ "type": "Point", "coordinates": [ -80.79527020454407, 32.132884966083935 ] }',
+        'left_id': 'left_point',
+        'left_geometry': '{ "type": "Point", "coordinates": [ -80.79527020454407, 32.132884966083935 ] }',
     }])
 >>> right = spark.createDataFrame([{
-        'id': 'right_polygon',
-        'geometry': '{ "type": "Polygon", "coordinates": [ [ [ -80.80022692680359, 32.12864200501338 ], [ -80.79224467277527, 32.12864200501338 ], [ -80.79224467277527, 32.13378441213715 ], [ -80.80022692680359, 32.13378441213715 ], [ -80.80022692680359, 32.12864200501338 ] ] ] }',
+        'right_id': 'right_polygon',
+        'right_geometry': '{ "type": "Polygon", "coordinates": [ [ [ -80.80022692680359, 32.12864200501338 ], [ -80.79224467277527, 32.12864200501338 ], [ -80.79224467277527, 32.13378441213715 ], [ -80.80022692680359, 32.13378441213715 ], [ -80.80022692680359, 32.12864200501338 ] ] ] }',
     }])
 >>>
->>> left = left.withColumn('h3_9', index_shape('geometry', F.lit(9)))
->>> right = right.withColumn('h3_9', index_shape('geometry', F.lit(9)))
+>>> left = left.withColumn('h3_9', index_shape('left_geometry', F.lit(9)))
+>>> right = right.withColumn('h3_9', index_shape('right_geometry', F.lit(9)))
 >>>
 >>> left = left.withColumn('h3_9', F.explode('h3_9'))
 >>> right = right.withColumn('h3_9', F.explode('h3_9'))
@@ -172,13 +172,46 @@ Once we have an indexed version of our geometries, we can easily join on the str
 >>> joined = left.join(right, on='h3_9', how='inner')
 >>> joined.show()
 +---------------+--------------------+----------+--------------------+-------------+
-|           h3_9|            geometry|        id|            geometry|           id|
+|           h3_9|       left_geometry|   left_id|      right_geometry|     right_id|
 +---------------+--------------------+----------+--------------------+-------------+
 |8944d55100fffff|{ "type": "Point"...|left_point|{ "type": "Polygo...|right_polygon|
 +---------------+--------------------+----------+--------------------+-------------+
 ```
 
 You can combine this technique with a [Buffer](#buffers) to do a **Distance Join**.
+
+<div style="background: rgba(255, 0, 0, 0.1);">
+
+> **Note:** The outputs of an H3 join are *approximate* – all resulting geometry pairs should be considered *intersection candidates* rather than *definitely intersecting*. Pairing a join here with a subsequent `distance` calculation (`distance = 0` = intersecting) or `intersects` can make this calculation exact. [Shapely](https://shapely.readthedocs.io) is a popular library with a well-documented [`distance`](https://shapely.readthedocs.io/en/stable/manual.html#object.distance) function which can be easily wrapped in a UDF:
+
+</div>
+
+```
+from pyspark.sql import functions as F, types as T
+from shapely import geometry
+import json
+
+@F.udf(T.DoubleType())
+def distance(geometry1, geometry2):
+    geometry1 = json.loads(geometry1)
+    geometry1 = geometry.shape(geometry1)
+    geometry2 = json.loads(geometry2)
+    geometry2 = geometry.shape(geometry2)
+    return geometry1.distance(geometry2)
+```
+
+After a spatial join (detailed above), you can filter to only directly intersecting geometries:
+
+```
+>>> joined = joined.withColumn('distance', distance(F.col('left_geometry'), F.col('right_geometry')))
+>>> joined = joined.filter(F.col('distance') == 0)
+>>> joined.show()
++---------------+--------------------+----------+--------------------+-------------+--------+
+|           h3_9|       left_geometry|   left_id|      right_geometry|     right_id|distance|
++---------------+--------------------+----------+--------------------+-------------+--------+
+|8944d55100fffff|{ "type": "Point"...|left_point|{ "type": "Polygo...|right_polygon|     0.0|
++---------------+--------------------+----------+--------------------+-------------+--------+
+```
 
 [View Live Map on GitHub](docs/spatial_join.geojson)
 
