@@ -1,19 +1,18 @@
-{% set name = "h3-pyspark" %}
-{% set version = "1.0.0" %}
-
+{% set version = "1.1.0" %}
 
 package:
-  name: {{ name|lower }}
+  name: h3-pyspark
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/h3-pyspark-{{ version }}.tar.gz
-  sha256: 0989ae24774088e59f0de043da2d5ad214fd5b6e31034e7f0f07b45b82f4d214
+  url: https://github.com/kevinschaich/h3-pyspark/archive/refs/tags/{{ version }}.tar.gz
+  sha256: 64c39a66664676ce799dbfb5cbd49d9a9d76926e5495dcc8ea580fb03b4b46fb
 
 build:
-  number: 0
   noarch: python
-  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+  skip: True  # [py<35]
+  script: python -m pip install --no-deps --ignore-installed .
 
 requirements:
   host:
@@ -22,31 +21,23 @@ requirements:
   run:
     - python >=3.6
     - pyspark >=3.0.0
-    - h3 >=3.7.0
-    - Shapely >=1.7.0
+    - h3-py >=3.7.0
+    - shapely >=1.7.0
 
 test:
+  requires:
+    - python >=3.6
+    - pyspark >=3.0.0
+    - h3-py >=3.7.0
+    - shapely >=1.7.0
   imports:
     - h3_pyspark
-  commands:
-    - pip check
-    - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    - black -l 120 --check --diff src tests
-    - pytest
-  requires:
-    - pip
-    - pyspark >=3.0.0
-    - h3 >=3.7.0
-    - Shapely >=1.7.0
-    - pytest >=6.0.0
-    - black >=21.11b1
 
 about:
   home: https://github.com/kevinschaich/h3-pyspark
   summary: PySpark bindings for H3, a hierarchical hexagonal geospatial indexing system
   license: Apache-2.0
+  license_family: Apache
   license_file: LICENSE
-
-extra:
-  recipe-maintainers:
-    - kevinschaich
+  dev_url: https://github.com/kevinschaich/h3-pyspark
+  doc_url: https://github.com/kevinschaich/h3-pyspark

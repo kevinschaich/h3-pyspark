@@ -187,9 +187,17 @@ You can combine this technique with a [Buffer](#buffers) to do a **Distance Join
 ## Publishing
 
 1. Bump version in `setup.cfg`
-2. Publish:
+2. Commit / Push
+3. Publish to `PyPi`
 
 ```bash
+git clean -fdx
 python3 -m build
 python3 -m twine upload --repository pypi dist/*
+```
+
+4. Publish to `conda-forge`:
+
+```bash
+# TODO
 ```
