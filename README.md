@@ -3,7 +3,11 @@
 # **h3-pyspark**: Uber's H3 Hexagonal Hierarchical Geospatial Indexing System in PySpark
 
 [![PyPI version](https://badge.fury.io/py/h3-pyspark.svg)](https://badge.fury.io/py/h3-pyspark)
+
+<!--
 [![conda](https://img.shields.io/conda/vn/conda-forge/h3-pyspark.svg)](https://anaconda.org/conda-forge/h3-pyspark)
+-->
+
 [![version](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/kevinschaich/h3-pyspark/blob/master/LICENSE)
 
 [![Tests](https://github.com/kevinschaich/h3-pyspark/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/kevinschaich/h3-pyspark/actions/workflows/tests.yml)
@@ -22,12 +26,14 @@ From `PyPI`:
 pip install h3-pyspark
 ```
 
+<!--
 From `conda`
 
 ```console
 conda config --add channels conda-forge
 conda install h3-pyspark
 ```
+-->
 
 ## Usage
 
