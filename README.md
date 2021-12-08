@@ -22,17 +22,19 @@ For available functions, please see the vanilla Python binding documentation at:
 
 From `PyPI`:
 
-```console
+```bash
 pip install h3-pyspark
 ```
 
 <!--
+
 From `conda`
 
-```console
+```bash
 conda config --add channels conda-forge
 conda install h3-pyspark
 ```
+
 -->
 
 ## Usage
@@ -186,7 +188,7 @@ You can combine this technique with a [Buffer](#buffers) to do a **Distance Join
 
 </div>
 
-```
+```python
 from pyspark.sql import functions as F, types as T
 from shapely import geometry
 import json
@@ -202,7 +204,7 @@ def distance(geometry1, geometry2):
 
 After a spatial join (detailed above), you can filter to only directly intersecting geometries:
 
-```
+```python
 >>> joined = joined.withColumn('distance', distance(F.col('left_geometry'), F.col('right_geometry')))
 >>> joined = joined.filter(F.col('distance') == 0)
 >>> joined.show()
