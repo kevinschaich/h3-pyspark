@@ -180,9 +180,9 @@ Once we have an indexed version of our geometries, we can easily join on the str
 
 You can combine this technique with a [Buffer](#buffers) to do a **Distance Join**.
 
-<div style="background: rgba(255, 0, 0, 0.1);">
+<div style="color: red;">
 
-> **Note:** The outputs of an H3 join are *approximate* – all resulting geometry pairs should be considered *intersection candidates* rather than *definitely intersecting*. Pairing a join here with a subsequent `distance` calculation (`distance = 0` = intersecting) or `intersects` can make this calculation exact. [Shapely](https://shapely.readthedocs.io) is a popular library with a well-documented [`distance`](https://shapely.readthedocs.io/en/stable/manual.html#object.distance) function which can be easily wrapped in a UDF:
+> **⚠️ Warning ⚠️:** The outputs of an H3 join are *approximate* – all resulting geometry pairs should be considered *intersection candidates* rather than *definitely intersecting*. Pairing a join here with a subsequent `distance` calculation (`distance = 0` = intersecting) or `intersects` can make this calculation exact. [Shapely](https://shapely.readthedocs.io) is a popular library with a well-documented [`distance`](https://shapely.readthedocs.io/en/stable/manual.html#object.distance) function which can be easily wrapped in a UDF:
 
 </div>
 
