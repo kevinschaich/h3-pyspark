@@ -3,11 +3,8 @@
 # **h3-pyspark**: Uber's H3 Hexagonal Hierarchical Geospatial Indexing System in PySpark
 
 [![PyPI version](https://img.shields.io/pypi/v/h3-pyspark.svg)](https://pypi.org/project/h3-pyspark/)
-
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/h3-pyspark.svg)](https://anaconda.org/conda-forge/h3-pyspark)
-
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/kevinschaich/h3-pyspark/blob/master/LICENSE)
-
 [![Tests](https://github.com/kevinschaich/h3-pyspark/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/kevinschaich/h3-pyspark/actions/workflows/tests.yml)
 
 PySpark bindings for the [H3 core library](https://h3geo.org/).
