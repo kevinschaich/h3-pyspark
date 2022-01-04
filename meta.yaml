@@ -1,4 +1,4 @@
-{% set version = "1.1.0" %}
+{% set version = "1.2.0" %}
 
 package:
   name: h3-pyspark
@@ -11,7 +11,7 @@ source:
 build:
   noarch: python
   number: 0
-  script: python -m pip install --no-deps --ignore-installed .
+  script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
   host:
@@ -19,16 +19,10 @@ requirements:
     - python >=3.6
   run:
     - python >=3.6
-    - pyspark >=3.0.0
     - h3-py >=3.7.0
     - shapely >=1.7.0
 
 test:
-  requires:
-    - python >=3.6
-    - pyspark >=3.0.0
-    - h3-py >=3.7.0
-    - shapely >=1.7.0
   imports:
     - h3_pyspark
 
