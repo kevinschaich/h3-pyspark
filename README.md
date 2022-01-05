@@ -100,7 +100,7 @@ Optionally, add another column `h3_9_geometry` for the GeoJSON representation of
 
 [View Live Map on GitHub](docs/spatial_index.geojson)
 
-[![Result](docs/spatial_index.png)](docs/spatial_index.geojson)
+[![Result](https://github.com/kevinschaich/h3-pyspark/raw/master/docs/spatial_index.png)](docs/spatial_index.geojson)
 
 ### Buffers
 
@@ -136,7 +136,7 @@ Since [we know the edge length & diameter (`2 * edge length`) of each H3 cell re
 
 [View Live Map on GitHub](docs/buffer.geojson)
 
-[![Result](docs/buffer.png)](docs/buffer.geojson)
+[![Result](https://github.com/kevinschaich/h3-pyspark/raw/master/docs/buffer.png)](docs/buffer.geojson)
 
 ### Spatial Joins
 
@@ -208,7 +208,7 @@ After a spatial join (detailed above), you can filter to only directly intersect
 
 [View Live Map on GitHub](docs/spatial_join.geojson)
 
-[![Result](docs/spatial_join.png)](docs/spatial_join.geojson)
+[![Result](https://github.com/kevinschaich/h3-pyspark/raw/master/docs/spatial_join.png)](docs/spatial_join.geojson)
 
 ## Publishing
 
