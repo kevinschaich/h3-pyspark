@@ -24,8 +24,7 @@ pip install h3-pyspark
 Via `conda-forge`:
 
 ```bash
-conda config --add channels conda-forge
-conda install h3-pyspark
+conda install -c conda-forge h3-pyspark
 ```
 
 ## Usage
@@ -222,5 +221,6 @@ python3 -m build
 python3 -m twine upload --repository pypi dist/*
 ```
 
-4. Publish to `conda-forge`:
-    * Bump version in [`meta.yml`](https://github.com/conda-forge/h3-pyspark-feedstock/blob/master/recipe/meta.yaml) in [`@conda-forge/h3-pyspark-feedstock`](https://github.com/conda-forge/h3-pyspark-feedstock)
+4. Create new tag & release in GitHub
+5. Publish to `conda-forge`:
+    * Bump version & new tag's `sha256` hash in [`meta.yml`](https://github.com/conda-forge/h3-pyspark-feedstock/blob/master/recipe/meta.yaml) in [`@conda-forge/h3-pyspark-feedstock`](https://github.com/conda-forge/h3-pyspark-feedstock)
