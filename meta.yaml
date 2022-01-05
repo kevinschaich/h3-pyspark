@@ -1,4 +1,4 @@
-{% set version = "1.2.0" %}
+{% set version = "1.2.1" %}
 
 package:
   name: h3-pyspark
@@ -14,13 +14,17 @@ build:
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
+  build:
+    - pytest
+    - black
   host:
     - pip
-    - python >=3.6
+    - python
   run:
-    - python >=3.6
-    - h3-py >=3.7.0
-    - shapely >=1.7.0
+    - python
+    - pyspark
+    - h3-py
+    - shapely
 
 test:
   imports:
