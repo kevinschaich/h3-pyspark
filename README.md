@@ -223,7 +223,4 @@ python3 -m twine upload --repository pypi dist/*
 ```
 
 4. Publish to `conda-forge`:
-
-```bash
-# TODO
-```
+    * Bump version in [`meta.yml`](https://github.com/conda-forge/h3-pyspark-feedstock/blob/master/recipe/meta.yaml) in [`@conda-forge/h3-pyspark-feedstock`](https://github.com/conda-forge/h3-pyspark-feedstock)
