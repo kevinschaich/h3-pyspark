@@ -212,15 +212,12 @@ After a spatial join (detailed above), you can filter to only directly intersect
 ## Publishing
 
 1. Bump version in `setup.cfg`
-2. Commit / Push
-3. Publish to `PyPi`
+2. Publish to `PyPi`
 
-```bash
-git clean -fdx
-python3 -m build
-python3 -m twine upload --repository pypi dist/*
-```
+        git clean -fdx
+        python3 -m build
+        python3 -m twine upload --repository pypi dist/*
 
-4. Create new tag & release in GitHub
-5. Publish to `conda-forge`:
+3. Create new tag & release in GitHub
+4. Publish to `conda-forge`:
     * Bump version & new tag's `sha256` hash in [`meta.yml`](https://github.com/conda-forge/h3-pyspark-feedstock/blob/master/recipe/meta.yaml) in [`@conda-forge/h3-pyspark-feedstock`](https://github.com/conda-forge/h3-pyspark-feedstock)
