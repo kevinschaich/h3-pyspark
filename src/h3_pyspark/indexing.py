@@ -1,5 +1,6 @@
 import json
 import h3
+import itertools
 from pyspark.sql.column import Column
 from shapely import geometry
 from shapely.geometry import (
