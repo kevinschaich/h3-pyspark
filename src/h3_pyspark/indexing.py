@@ -37,7 +37,10 @@ def _index_line_object(line: LineString, resolution: int):
     endpoint_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(line.coords)]
     # Hexes for line (inclusive of endpoints)
     for i in range(len(endpoint_hexes) - 1):
-        result_set.update(h3.h3_line(endpoint_hexes[i], endpoint_hexes[i + 1]))
+        try:
+            result_set.update(h3.h3_line(endpoint_hexes[i], endpoint_hexes[i + 1]))
+        except h3.H3ValueError:
+            pass
     return result_set
 
 
@@ -52,7 +55,10 @@ def _index_polygon_object(polygon: Polygon, resolution: int):
     vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(polygon.exterior.coords)]
     # Hexes for edges (inclusive of vertices)
     for i in range(len(vertex_hexes) - 1):
-        result_set.update(h3.h3_line(vertex_hexes[i], vertex_hexes[i + 1]))
+        try:
+            result_set.update(h3.h3_line(vertex_hexes[i], vertex_hexes[i + 1]))
+        except h3.H3ValueError:
+            pass
     # Hexes for internal area
     result_set.update(list(h3.polyfill(geometry.mapping(polygon), resolution, geo_json_conformant=True)))
     return result_set
