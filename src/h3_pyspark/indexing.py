@@ -1,4 +1,5 @@
 import json
+import math
 import h3
 from pyspark.sql.column import Column
 from shapely import geometry
@@ -11,6 +12,7 @@ from shapely.geometry import (
     MultiPolygon,
 )
 from pyspark.sql import functions as F, types as T
+from .utils import flatten, densify
 
 
 def _index_point_object(point: Point, resolution: int):
@@ -33,14 +35,22 @@ def _index_line_object(line: LineString, resolution: int):
     Returns the set of H3 cells at the specified resolution which completely cover the input line.
     """
     result_set = set()
-    # Hexes for endpoints
-    endpoint_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(line.coords)]
-    # Hexes for line (inclusive of endpoints)
-    for i in range(len(endpoint_hexes) - 1):
-        try:
-            result_set.update(h3.h3_line(endpoint_hexes[i], endpoint_hexes[i + 1]))
-        except h3.H3ValueError:
-            pass
+    
+    # Hexes for vertices
+    vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(line.coords)]
+    result_set.update(vertex_hexes)
+
+    # Figure out the max-length line segment (step) we can process without interpolating
+    # https://github.com/kevinschaich/h3-pyspark/issues/8
+    endpoint_hex_edges = flatten([
+        h3.get_h3_unidirectional_edges_from_hexagon(h) for h in [vertex_hexes[0], vertex_hexes[1]]
+    ])
+    step = math.degrees(min([h3.exact_edge_length(e, unit="rads") for e in endpoint_hex_edges]))
+
+    densified_line = densify(line, step - step * 0.1) # 10% buffer to guarantee we don't miss any hexes
+    line_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(densified_line.coords)]
+    result_set.update(line_hexes)
+
     return result_set
 
 
@@ -53,12 +63,12 @@ def _index_polygon_object(polygon: Polygon, resolution: int):
     result_set = set()
     # Hexes for vertices
     vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(polygon.exterior.coords)]
-    # Hexes for edges (inclusive of vertices)
-    for i in range(len(vertex_hexes) - 1):
-        try:
-            result_set.update(h3.h3_line(vertex_hexes[i], vertex_hexes[i + 1]))
-        except h3.H3ValueError:
-            pass
+    result_set.update(vertex_hexes)
+
+    # Hexes for edges
+    edge_hexes = _index_shape_object(polygon.boundary, resolution)
+    result_set.update(edge_hexes)
+
     # Hexes for internal area
     result_set.update(list(h3.polyfill(geometry.mapping(polygon), resolution, geo_json_conformant=True)))
     return result_set
