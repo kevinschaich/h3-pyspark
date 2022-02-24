@@ -35,19 +35,19 @@ def _index_line_object(line: LineString, resolution: int):
     Returns the set of H3 cells at the specified resolution which completely cover the input line.
     """
     result_set = set()
-    
+
     # Hexes for vertices
     vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(line.coords)]
     result_set.update(vertex_hexes)
 
     # Figure out the max-length line segment (step) we can process without interpolating
     # https://github.com/kevinschaich/h3-pyspark/issues/8
-    endpoint_hex_edges = flatten([
-        h3.get_h3_unidirectional_edges_from_hexagon(h) for h in [vertex_hexes[0], vertex_hexes[1]]
-    ])
+    endpoint_hex_edges = flatten(
+        [h3.get_h3_unidirectional_edges_from_hexagon(h) for h in [vertex_hexes[0], vertex_hexes[1]]]
+    )
     step = math.degrees(min([h3.exact_edge_length(e, unit="rads") for e in endpoint_hex_edges]))
 
-    densified_line = densify(line, step - step * 0.1) # 10% buffer to guarantee we don't miss any hexes
+    densified_line = densify(line, step - step * 0.1)  # 10% buffer to guarantee we don't miss any hexes
     line_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(densified_line.coords)]
     result_set.update(line_hexes)
 

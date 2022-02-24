@@ -25,7 +25,7 @@ class TestIndexing(unittest.TestCase):
 
     def test_h3_index_line_2(self):
         actual = indexing._index_shape(line2, 9)
-        expected = ['8944d551073ffff', '8944d55103bffff', '8944d55100fffff']
+        expected = ["8944d551073ffff", "8944d55103bffff", "8944d55100fffff"]
         assert set(actual) == set(expected)
 
     def test_h3_index_polygon(self):

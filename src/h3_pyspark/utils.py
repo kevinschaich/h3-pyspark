@@ -7,13 +7,13 @@ def flatten(t):
 
 
 def densify(line, step):
-    '''
+    """
     Given a line segment, return another line segment with the same start & endpoints,
     and equally spaced sub-points based on `step` size.
 
     All the points on the new line are guaranteed to intersect with the original line,
     and the first and last points will be the same.
-    '''
+    """
 
     if line.length < step:
         return line
