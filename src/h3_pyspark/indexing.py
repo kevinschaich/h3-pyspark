@@ -52,7 +52,9 @@ def _index_line_object(line: LineString, resolution: int):
     result_set.update(line_hexes)
 
     neighboring_hexes = set(flatten([h3.k_ring(h, 1) for h in result_set])) - result_set
-    intersecting_neighboring_hexes = filter(lambda h: Polygon(h3.h3_set_to_multi_polygon([h], True)[0][0]).distance(line) == 0, neighboring_hexes)
+    intersecting_neighboring_hexes = filter(
+        lambda h: Polygon(h3.h3_set_to_multi_polygon([h], True)[0][0]).distance(line) == 0, neighboring_hexes
+    )
     result_set.update(intersecting_neighboring_hexes)
 
     return result_set
