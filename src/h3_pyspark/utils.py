@@ -2,6 +2,19 @@ import json
 from shapely.geometry import LineString
 
 
+def handle_nulls(function):
+    """
+    Decorator to return null if any of the input arguments are null.
+    """
+
+    def inner(*args, **kwargs):
+        if any(arg is None for arg in args):
+            return None
+        return function(*args, **kwargs)
+
+    return inner
+
+
 def flatten(t):
     return [item for sublist in t for item in sublist]
 

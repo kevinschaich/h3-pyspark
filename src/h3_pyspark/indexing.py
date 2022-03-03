@@ -12,7 +12,7 @@ from shapely.geometry import (
     MultiPolygon,
 )
 from pyspark.sql import functions as F, types as T
-from .utils import flatten, densify
+from .utils import flatten, densify, handle_nulls
 
 
 def _index_point_object(point: Point, resolution: int):
@@ -117,6 +117,7 @@ def _index_shape(shape: str, resolution: int):
 
 
 @F.udf(T.ArrayType(T.StringType()))
+@handle_nulls
 def index_shape(geometry: Column, resolution: Column):
     """
     Generate an H3 spatial index for an input GeoJSON geometry column.

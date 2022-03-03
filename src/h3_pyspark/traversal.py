@@ -2,6 +2,7 @@ import h3
 from pyspark.sql import functions as F, types as T
 from pyspark.sql.column import Column
 from typing import List
+from .utils import handle_nulls
 
 
 def _k_ring_distinct(cells: List[str], distance: int = 1):
@@ -15,6 +16,7 @@ def _k_ring_distinct(cells: List[str], distance: int = 1):
 
 
 @F.udf(T.ArrayType(T.StringType()))
+@handle_nulls
 def k_ring_distinct(cells: Column, distance: Column):
     """
     Perform a k-ring operation on every input cell and return the distinct set of output cells.
