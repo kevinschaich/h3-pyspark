@@ -1,4 +1,3 @@
-import itertools
 import json
 import math
 import h3
@@ -48,13 +47,9 @@ def _index_line_object(line: LineString, resolution: int):
     )
     step = math.degrees(min([h3.exact_edge_length(e, unit="rads") for e in endpoint_hex_edges]))
 
-    densified_line = densify(line, step)
+    densified_line = densify(line, step - step * 0.1)  # 10% buffer to guarantee we don't miss any hexes
     line_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(densified_line.coords)]
     result_set.update(line_hexes)
-
-    neighboring_hexes = set(itertools.chain(*[h3.k_ring(h, 1) for h in result_set])) - result_set
-    intersecting_neighboring_hexes = filter(lambda h: Polygon(h3.h3_set_to_multi_polygon([h], True)[0][0]).distance(line) == 0, neighboring_hexes)
-    result_set.update(intersecting_neighboring_hexes)
 
     return result_set
 
