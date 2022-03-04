@@ -209,15 +209,16 @@ After a spatial join (detailed above), you can filter to only directly intersect
 
 [![Result](https://github.com/kevinschaich/h3-pyspark/raw/master/docs/spatial_join.png)](docs/spatial_join.geojson)
 
-## Publishing
+## Publishing New Versions
 
-1. Bump version in `setup.cfg`
+1. Bump version in [`setup.cfg`](./setup.cfg)
 2. Publish to `PyPi`
 
         git clean -fdx
         python3 -m build
         python3 -m twine upload --repository pypi dist/*
 
-3. Create new tag & release in GitHub
+3. Create a new tag & release w/ version `x.x.x` and name `h3-pyspark-x.x.x` in GitHub
 4. Publish to `conda-forge`:
     * Bump version & new tag's `sha256` hash in [`meta.yml`](https://github.com/conda-forge/h3-pyspark-feedstock/blob/master/recipe/meta.yaml) in [`@conda-forge/h3-pyspark-feedstock`](https://github.com/conda-forge/h3-pyspark-feedstock)
+        openssl sha256 /path/to/h3-pyspark-x.x.x.tar.gz
