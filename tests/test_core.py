@@ -92,6 +92,18 @@ class TestCore(unittest.TestCase):
         expected = sanitize_types(h3.geo_to_h3(*h3_test_args))
         assert sort(actual) == sort(expected)
 
+    def test_geo_to_h3_single_null_input(self):
+        actual = df.withColumn("actual", h3_pyspark.geo_to_h3(F.lit(100), F.lit(None), F.lit(9)))
+        actual = actual.collect()[0]["actual"]
+        expected = None
+        assert actual == expected
+
+    def test_geo_to_h3_all_null_inputs(self):
+        actual = df.withColumn("actual", h3_pyspark.geo_to_h3(F.lit(None), F.lit(None), F.lit(None)))
+        actual = actual.collect()[0]["actual"]
+        expected = None
+        assert actual == expected
+
     def test_h3_to_geo(self):
         h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_geo)
 
