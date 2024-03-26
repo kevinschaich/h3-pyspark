@@ -4,3 +4,13 @@ requires = [
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "h3-pyspark"
+version = "1.2.6"
+dependencies = [
+    "Shapely",
+    "pytest",
+    "black",
+    "pyspark"
+]
