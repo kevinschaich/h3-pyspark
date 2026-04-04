@@ -13,6 +13,8 @@ For available functions, please see the vanilla Python binding documentation at:
 
 - [uber.github.io/h3-py](https://uber.github.io/h3-py)
 
+## NOTE: [Uber significantly changed the function calls used in v4+.](https://h3geo.org/docs/library/migration-3.x/functions) This library will only work with h3 version 3.7.4 or earlier.
+
 ## Installation
 
 Via `PyPI`:

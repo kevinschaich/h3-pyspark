@@ -1,4 +1,3 @@
-from inspect import getfullargspec
 from pyspark.sql import SparkSession, functions as F, types as T
 import h3
 import json
@@ -54,15 +53,6 @@ test_arg_map = {
 df = spark.createDataFrame([test_arg_map])
 
 
-def get_test_args(function):
-    argspec = getfullargspec(function)
-    args = argspec.args
-    h3_test_args = [test_arg_map.get(a.lower()) for a in args]
-    h3_pyspark_test_args = [F.col(a) for a in args]
-
-    return h3_test_args, h3_pyspark_test_args
-
-
 def sort(value):
     if isinstance(value, str) or isinstance(value, bool) or isinstance(value, int) or isinstance(value, float):
         return value
@@ -85,11 +75,9 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_geo_to_h3(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.geo_to_h3)
-
-        actual = df.withColumn("actual", h3_pyspark.geo_to_h3(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.geo_to_h3(F.col("lat"), F.col("lng"), F.col("resolution")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.geo_to_h3(*h3_test_args))
+        expected = sanitize_types(h3.latlng_to_cell(latitude, longitude, integer))
         assert sort(actual) == sort(expected)
 
     def test_geo_to_h3_single_null_input(self):
@@ -105,19 +93,19 @@ class TestCore(unittest.TestCase):
         assert actual == expected
 
     def test_h3_to_geo(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_geo)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_to_geo(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_to_geo(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_to_geo(*h3_test_args))
+        expected = sanitize_types(h3.cell_to_latlng(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_h3_to_geo_boundary(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_geo_boundary)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_to_geo_boundary(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_to_geo_boundary(F.col("h"), F.col("geo_json")))
         actual = actual.collect()[0]["actual"]
-        expected = json.dumps({"type": "MultiPolygon", "coordinates": h3.h3_to_geo_boundary(*h3_test_args)})
+        # Build expected: cell_to_boundary returns (lat, lng) tuples; geo_json=True → lng,lat GeoJSON MultiPolygon
+        boundary = h3.cell_to_boundary(h3_cells[0])
+        coords = [[lng, lat] for lat, lng in boundary]
+        coords.append(coords[0])
+        expected = json.dumps({"type": "MultiPolygon", "coordinates": [[coords]]})
         assert sort(actual) == sort(expected)
 
     ###############################################################################
@@ -125,67 +113,53 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_h3_get_resolution(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_get_resolution)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_get_resolution(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_get_resolution(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_get_resolution(*h3_test_args))
+        expected = sanitize_types(h3.get_resolution(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_h3_get_base_cell(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_get_base_cell)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_get_base_cell(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_get_base_cell(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_get_base_cell(*h3_test_args))
+        expected = sanitize_types(h3.get_base_cell_number(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_string_to_h3(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.string_to_h3)
-
-        actual = df.withColumn("actual", h3_pyspark.string_to_h3(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.string_to_h3(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.string_to_h3(*h3_test_args))
+        expected = sanitize_types(h3.str_to_int(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_h3_to_string(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_string)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_to_string(*h3_pyspark_test_args))
+        h_int = h3.str_to_int(h3_cells[0])
+        df2 = spark.createDataFrame([{"h_int": h_int}])
+        actual = df2.withColumn("actual", h3_pyspark.h3_to_string(F.col("h_int")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_to_string(*h3_test_args))
+        expected = sanitize_types(h3.int_to_str(h_int))
         assert sort(actual) == sort(expected)
 
     def test_h3_is_valid(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_is_valid)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_is_valid(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_is_valid(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_is_valid(*h3_test_args))
+        expected = sanitize_types(h3.is_valid_cell(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_h3_is_res_class_III(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_is_res_class_III)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_is_res_class_III(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_is_res_class_III(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_is_res_class_III(*h3_test_args))
+        expected = sanitize_types(h3.is_res_class_III(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_h3_is_pentagon(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_is_pentagon)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_is_pentagon(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_is_pentagon(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_is_pentagon(*h3_test_args))
+        expected = sanitize_types(h3.is_pentagon(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_h3_get_faces(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_get_faces)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_get_faces(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_get_faces(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_get_faces(*h3_test_args))
+        expected = sanitize_types(h3.get_icosahedron_faces(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     ###############################################################################
@@ -193,83 +167,65 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_k_ring(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.k_ring)
-
-        actual = df.withColumn("actual", h3_pyspark.k_ring(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.k_ring(F.col("origin"), F.col("k")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.k_ring(*h3_test_args))
+        expected = sanitize_types(h3.grid_disk(h3_cells[2], integer))
         assert sort(actual) == sort(expected)
 
     def test_k_ring_distances(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.k_ring_distances)
-
-        actual = df.withColumn("actual", h3_pyspark.k_ring_distances(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.k_ring_distances(F.col("origin"), F.col("k")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.k_ring_distances(*h3_test_args))
+        expected = sanitize_types([list(h3.grid_ring(h3_cells[2], i)) for i in range(integer + 1)])
         assert sort(actual) == sort(expected)
 
     def test_hex_range(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.hex_range)
-
-        actual = df.withColumn("actual", h3_pyspark.hex_range(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.hex_range(F.col("h"), F.col("k")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.hex_range(*h3_test_args))
+        expected = sanitize_types(h3.grid_disk(h3_cells[0], integer))
         assert sort(actual) == sort(expected)
 
     def test_hex_range_distances(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.hex_range_distances)
-
-        actual = df.withColumn("actual", h3_pyspark.hex_range_distances(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.hex_range_distances(F.col("h"), F.col("k")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.hex_range_distances(*h3_test_args))
+        expected = sanitize_types([list(h3.grid_ring(h3_cells[0], i)) for i in range(integer + 1)])
         assert sort(actual) == sort(expected)
 
     def test_hex_ranges(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.hex_ranges)
-
-        actual = df.withColumn("actual", h3_pyspark.hex_ranges(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.hex_ranges(F.col("h"), F.col("k")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.hex_ranges(*h3_test_args))
+        expected = sanitize_types({h3_cells[0]: [list(h3.grid_ring(h3_cells[0], i)) for i in range(integer + 1)]})
         assert sort(actual) == sort(expected)
 
     def test_hex_ring(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.hex_ring)
-
-        actual = df.withColumn("actual", h3_pyspark.hex_ring(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.hex_ring(F.col("h"), F.col("k")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.hex_ring(*h3_test_args))
+        expected = sanitize_types(h3.grid_ring(h3_cells[0], integer))
         assert sort(actual) == sort(expected)
 
     def test_h3_line(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_line)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_line(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_line(F.col("start"), F.col("end")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_line(*h3_test_args))
+        expected = sanitize_types(h3.grid_path_cells(h3_cells[1], h3_cells[2]))
         assert sort(actual) == sort(expected)
 
     def test_h3_distance(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_distance)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_distance(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_distance(F.col("h1"), F.col("h2")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_distance(*h3_test_args))
+        expected = sanitize_types(h3.grid_distance(h3_cells[1], h3_cells[2]))
         assert sort(actual) == sort(expected)
 
     def test_experimental_h3_to_local_ij(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.experimental_h3_to_local_ij)
-
-        actual = df.withColumn("actual", h3_pyspark.experimental_h3_to_local_ij(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.experimental_h3_to_local_ij(F.col("origin"), F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.experimental_h3_to_local_ij(*h3_test_args))
+        expected = sanitize_types(h3.cell_to_local_ij(h3_cells[2], h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_experimental_local_ij_to_h3(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.experimental_local_ij_to_h3)
-
-        actual = df.withColumn("actual", h3_pyspark.experimental_local_ij_to_h3(*h3_pyspark_test_args))
+        ij = h3.cell_to_local_ij(h3_cells[2], h3_cells[0])
+        df2 = spark.createDataFrame([{"origin": h3_cells[2], "i": ij[0], "j": ij[1]}])
+        actual = df2.withColumn("actual", h3_pyspark.experimental_local_ij_to_h3(F.col("origin"), F.col("i"), F.col("j")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.experimental_local_ij_to_h3(*h3_test_args))
+        expected = sanitize_types(h3.local_ij_to_cell(h3_cells[2], ij[0], ij[1]))
         assert sort(actual) == sort(expected)
 
     ###############################################################################
@@ -277,43 +233,33 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_h3_to_parent(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_parent)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_to_parent(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_to_parent(F.col("h"), F.col("resolution")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_to_parent(*h3_test_args))
+        expected = sanitize_types(h3.cell_to_parent(h3_cells[0], integer))
         assert sort(actual) == sort(expected)
 
     def test_h3_to_children(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_children)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_to_children(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_to_children(F.col("h"), F.col("resolution")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_to_children(*h3_test_args))
+        expected = sanitize_types(h3.cell_to_children(h3_cells[0], integer))
         assert sort(actual) == sort(expected)
 
     def test_h3_to_center_child(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_to_center_child)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_to_center_child(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_to_center_child(F.col("h"), F.col("resolution")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_to_center_child(*h3_test_args))
+        expected = sanitize_types(h3.cell_to_center_child(h3_cells[0], integer))
         assert sort(actual) == sort(expected)
 
     def test_compact(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.compact)
-
-        actual = df.withColumn("actual", h3_pyspark.compact(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.compact(F.col("hexes")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.compact(*h3_test_args))
+        expected = sanitize_types(h3.compact_cells(h3_cells))
         assert sort(actual) == sort(expected)
 
     def test_uncompact(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.uncompact)
-
-        actual = df.withColumn("actual", h3_pyspark.uncompact(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.uncompact(F.col("hexes"), F.col("res")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.uncompact(*h3_test_args))
+        expected = sanitize_types(h3.uncompact_cells(h3_cells, integer))
         assert sort(actual) == sort(expected)
 
     ###############################################################################
@@ -321,21 +267,18 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_polyfill(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.polyfill)
-
-        actual = df.withColumn("actual", h3_pyspark.polyfill(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.polyfill(F.col("geojson"), F.col("res"), F.col("geo_json_conformant")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.polyfill(json.loads(polygon), integer, True))
+        expected = sanitize_types(list(h3.geo_to_cells(json.loads(polygon), integer)))
         assert sort(actual) == sort(expected)
 
     def test_h3_set_to_multi_polygon(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_set_to_multi_polygon)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_set_to_multi_polygon(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_set_to_multi_polygon(F.col("hexes"), F.col("geo_json")))
         actual = actual.collect()[0]["actual"]
-        expected = expected = json.dumps(
-            {"type": "MultiPolygon", "coordinates": h3.h3_set_to_multi_polygon(*h3_test_args)}
-        )
+        geojson_dict = h3.cells_to_geo(h3_cells)
+        if geojson_dict["type"] == "Polygon":
+            geojson_dict = {"type": "MultiPolygon", "coordinates": [geojson_dict["coordinates"]]}
+        expected = json.dumps(geojson_dict)
         assert sort(actual) == sort(expected)
 
     ###############################################################################
@@ -343,82 +286,56 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_h3_indexes_are_neighbors(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_indexes_are_neighbors)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_indexes_are_neighbors(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_indexes_are_neighbors(F.col("origin"), F.col("destination")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_indexes_are_neighbors(*h3_test_args))
+        expected = sanitize_types(h3.are_neighbor_cells(h3_cells[2], h3_cells[3]))
         assert sort(actual) == sort(expected)
 
     def test_get_h3_unidirectional_edge(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_unidirectional_edge)
-
-        actual = df.withColumn("actual", h3_pyspark.get_h3_unidirectional_edge(*h3_pyspark_test_args))
+        # Need two neighboring cells for this test
+        neighbors = list(h3.grid_disk(h3_cells[0], 1))
+        neighbor = [n for n in neighbors if n != h3_cells[0]][0]
+        df2 = spark.createDataFrame([{"origin": h3_cells[0], "destination": neighbor}])
+        actual = df2.withColumn("actual", h3_pyspark.get_h3_unidirectional_edge(F.col("origin"), F.col("destination")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_h3_unidirectional_edge(*h3_test_args))
+        expected = sanitize_types(h3.cells_to_directed_edge(h3_cells[0], neighbor))
         assert sort(actual) == sort(expected)
 
     def test_h3_unidirectional_edge_is_valid(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.h3_unidirectional_edge_is_valid)
-
-        actual = df.withColumn("actual", h3_pyspark.h3_unidirectional_edge_is_valid(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.h3_unidirectional_edge_is_valid(F.col("edge")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.h3_unidirectional_edge_is_valid(*h3_test_args))
+        expected = sanitize_types(h3.is_valid_directed_edge(h3_edge))
         assert sort(actual) == sort(expected)
 
     def test_get_origin_h3_index_from_unidirectional_edge(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_origin_h3_index_from_unidirectional_edge)
-
-        actual = df.withColumn(
-            "actual",
-            h3_pyspark.get_origin_h3_index_from_unidirectional_edge(*h3_pyspark_test_args),
-        )
+        actual = df.withColumn("actual", h3_pyspark.get_origin_h3_index_from_unidirectional_edge(F.col("edge")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_origin_h3_index_from_unidirectional_edge(*h3_test_args))
+        expected = sanitize_types(h3.get_directed_edge_origin(h3_edge))
         assert sort(actual) == sort(expected)
 
     def test_get_destination_h3_index_from_unidirectional_edge(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_destination_h3_index_from_unidirectional_edge)
-
-        actual = df.withColumn(
-            "actual",
-            h3_pyspark.get_destination_h3_index_from_unidirectional_edge(*h3_pyspark_test_args),
-        )
+        actual = df.withColumn("actual", h3_pyspark.get_destination_h3_index_from_unidirectional_edge(F.col("edge")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_destination_h3_index_from_unidirectional_edge(*h3_test_args))
+        expected = sanitize_types(h3.get_directed_edge_destination(h3_edge))
         assert sort(actual) == sort(expected)
 
     def test_get_h3_indexes_from_unidirectional_edge(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_indexes_from_unidirectional_edge)
-
-        actual = df.withColumn(
-            "actual",
-            h3_pyspark.get_h3_indexes_from_unidirectional_edge(*h3_pyspark_test_args),
-        )
+        actual = df.withColumn("actual", h3_pyspark.get_h3_indexes_from_unidirectional_edge(F.col("edge")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_h3_indexes_from_unidirectional_edge(*h3_test_args))
+        expected = sanitize_types(h3.directed_edge_to_cells(h3_edge))
         assert sort(actual) == sort(expected)
 
     def test_get_h3_unidirectional_edges_from_hexagon(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_unidirectional_edges_from_hexagon)
-
-        actual = df.withColumn(
-            "actual",
-            h3_pyspark.get_h3_unidirectional_edges_from_hexagon(*h3_pyspark_test_args),
-        )
+        actual = df.withColumn("actual", h3_pyspark.get_h3_unidirectional_edges_from_hexagon(F.col("h")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_h3_unidirectional_edges_from_hexagon(*h3_test_args))
+        expected = sanitize_types(h3.origin_to_directed_edges(h3_cells[0]))
         assert sort(actual) == sort(expected)
 
     def test_get_h3_unidirectional_edge_boundary(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_h3_unidirectional_edge_boundary)
-
-        actual = df.withColumn(
-            "actual",
-            h3_pyspark.get_h3_unidirectional_edge_boundary(*h3_pyspark_test_args),
-        )
+        actual = df.withColumn("actual", h3_pyspark.get_h3_unidirectional_edge_boundary(F.col("edge"), F.col("geo_json")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_h3_unidirectional_edge_boundary(*h3_test_args))
+        boundary = h3.directed_edge_to_boundary(h3_edge)
+        expected = sanitize_types([[lng, lat] for lat, lng in boundary])
         assert sort(actual) == sort(expected)
 
     ###############################################################################
@@ -426,82 +343,56 @@ class TestCore(unittest.TestCase):
     ###############################################################################
 
     def test_hex_area(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.hex_area)
-
-        h3_test_args[-1] = "m^2"
-        actual = df.withColumn("unit", F.lit("m^2"))
-
-        actual = actual.withColumn("actual", h3_pyspark.hex_area(*h3_pyspark_test_args))
+        df2 = df.withColumn("unit", F.lit("m^2"))
+        actual = df2.withColumn("actual", h3_pyspark.hex_area(F.col("res"), F.col("unit")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.hex_area(*h3_test_args))
+        expected = sanitize_types(h3.average_hexagon_area(integer, "m^2"))
         assert sort(actual) == sort(expected)
 
     def test_cell_area(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.cell_area)
-
-        h3_test_args[-1] = "m^2"
-        actual = df.withColumn("unit", F.lit("m^2"))
-
-        actual = actual.withColumn("actual", h3_pyspark.cell_area(*h3_pyspark_test_args))
+        df2 = df.withColumn("unit", F.lit("m^2"))
+        actual = df2.withColumn("actual", h3_pyspark.cell_area(F.col("h"), F.col("unit")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.cell_area(*h3_test_args))
+        expected = sanitize_types(h3.cell_area(h3_cells[0], "m^2"))
         assert sort(actual) == sort(expected)
 
     def test_edge_length(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.edge_length)
-
-        h3_test_args[-1] = "m"
-        actual = df.withColumn("unit", F.lit("m"))
-
-        actual = actual.withColumn("actual", h3_pyspark.edge_length(*h3_pyspark_test_args))
+        df2 = df.withColumn("unit", F.lit("m"))
+        actual = df2.withColumn("actual", h3_pyspark.edge_length(F.col("res"), F.col("unit")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.edge_length(*h3_test_args))
+        expected = sanitize_types(h3.average_hexagon_edge_length(integer, "m"))
         assert sort(actual) == sort(expected)
 
     def test_exact_edge_length(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.exact_edge_length)
-
-        h3_test_args[-1] = "m"
-        actual = df.withColumn("unit", F.lit("m"))
-
-        actual = actual.withColumn("actual", h3_pyspark.exact_edge_length(*h3_pyspark_test_args))
+        df2 = df.withColumn("unit", F.lit("m"))
+        actual = df2.withColumn("actual", h3_pyspark.exact_edge_length(F.col("edge"), F.col("unit")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.exact_edge_length(*h3_test_args))
+        expected = sanitize_types(h3.edge_length(h3_edge, "m"))
         assert sort(actual) == sort(expected)
 
     def test_num_hexagons(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.num_hexagons)
-
-        actual = df.withColumn("actual", h3_pyspark.num_hexagons(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.num_hexagons(F.col("res")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.num_hexagons(*h3_test_args))
+        expected = sanitize_types(h3.get_num_cells(integer))
         assert sort(actual) == sort(expected)
 
     def test_get_res0_indexes(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_res0_indexes)
-
-        actual = df.withColumn("actual", h3_pyspark.get_res0_indexes(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.get_res0_indexes())
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_res0_indexes(*h3_test_args))
+        expected = sanitize_types(h3.get_res0_cells())
         assert sort(actual) == sort(expected)
 
     def test_get_pentagon_indexes(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.get_pentagon_indexes)
-
-        actual = df.withColumn("actual", h3_pyspark.get_pentagon_indexes(*h3_pyspark_test_args))
+        actual = df.withColumn("actual", h3_pyspark.get_pentagon_indexes(F.col("res")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.get_pentagon_indexes(*h3_test_args))
+        expected = sanitize_types(h3.get_pentagons(integer))
         assert sort(actual) == sort(expected)
 
     def test_point_dist(self):
-        h3_test_args, h3_pyspark_test_args = get_test_args(h3.point_dist)
-
-        h3_test_args[-1] = "m"
-        actual = df.withColumn("unit", F.lit("m"))
-
-        actual = actual.withColumn("actual", h3_pyspark.point_dist(*h3_pyspark_test_args))
+        df2 = df.withColumn("unit", F.lit("m"))
+        actual = df2.withColumn("actual", h3_pyspark.point_dist(F.col("point1"), F.col("point2"), F.col("unit")))
         actual = actual.collect()[0]["actual"]
-        expected = sanitize_types(h3.point_dist(*h3_test_args))
+        expected = sanitize_types(h3.great_circle_distance((latitude, longitude), (latitude, longitude), "m"))
         assert sort(actual) == sort(expected)
 
 

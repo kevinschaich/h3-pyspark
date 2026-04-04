@@ -24,7 +24,7 @@ def _index_point_object(point: Point, resolution: int):
     result_set = set()
 
     # Hexes for point
-    result_set.update(h3.geo_to_h3(t[1], t[0], resolution) for t in list(point.coords))
+    result_set.update(h3.latlng_to_cell(t[1], t[0], resolution) for t in list(point.coords))
     return result_set
 
 
@@ -37,23 +37,24 @@ def _index_line_object(line: LineString, resolution: int):
     result_set = set()
 
     # Hexes for vertices
-    vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(line.coords)]
+    vertex_hexes = [h3.latlng_to_cell(t[1], t[0], resolution) for t in list(line.coords)]
     result_set.update(vertex_hexes)
 
     # Figure out the max-length line segment (step) we can process without interpolating
     # https://github.com/kevinschaich/h3-pyspark/issues/8
     endpoint_hex_edges = flatten(
-        [h3.get_h3_unidirectional_edges_from_hexagon(h) for h in [vertex_hexes[0], vertex_hexes[1]]]
+        [h3.origin_to_directed_edges(h) for h in [vertex_hexes[0], vertex_hexes[1]]]
     )
-    step = math.degrees(min([h3.exact_edge_length(e, unit="rads") for e in endpoint_hex_edges]))
+    step = math.degrees(min([h3.edge_length(e, unit="rads") for e in endpoint_hex_edges]))
 
     densified_line = densify(line, step)
-    line_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(densified_line.coords)]
+    line_hexes = [h3.latlng_to_cell(t[1], t[0], resolution) for t in list(densified_line.coords)]
     result_set.update(line_hexes)
 
-    neighboring_hexes = set(flatten([h3.k_ring(h, 1) for h in result_set])) - result_set
+    neighboring_hexes = set(flatten([h3.grid_disk(h, 1) for h in result_set])) - result_set
     intersecting_neighboring_hexes = filter(
-        lambda h: Polygon(h3.h3_set_to_multi_polygon([h], True)[0][0]).distance(line) == 0, neighboring_hexes
+        lambda h: Polygon(h3.cells_to_geo([h])["coordinates"][0]).distance(line) == 0,
+        neighboring_hexes,
     )
     result_set.update(intersecting_neighboring_hexes)
 
@@ -68,7 +69,7 @@ def _index_polygon_object(polygon: Polygon, resolution: int):
     """
     result_set = set()
     # Hexes for vertices
-    vertex_hexes = [h3.geo_to_h3(t[1], t[0], resolution) for t in list(polygon.exterior.coords)]
+    vertex_hexes = [h3.latlng_to_cell(t[1], t[0], resolution) for t in list(polygon.exterior.coords)]
     result_set.update(vertex_hexes)
 
     # Hexes for edges
@@ -76,7 +77,7 @@ def _index_polygon_object(polygon: Polygon, resolution: int):
     result_set.update(edge_hexes)
 
     # Hexes for internal area
-    result_set.update(list(h3.polyfill(geometry.mapping(polygon), resolution, geo_json_conformant=True)))
+    result_set.update(list(h3.geo_to_cells(geometry.mapping(polygon), resolution)))
     return result_set
 
 
