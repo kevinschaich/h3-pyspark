@@ -13,7 +13,7 @@ For available functions, please see the vanilla Python binding documentation at:
 
 - [uber.github.io/h3-py](https://uber.github.io/h3-py)
 
-## NOTE: [Uber significantly changed the function calls used in v4+.](https://h3geo.org/docs/library/migration-3.x/functions) This library will only work with h3 version 3.7.4 or earlier.
+> **h3 v4 compatible.** This library requires `h3>=4.0.0`. If you are migrating from an older version of h3-pyspark, see the [H3 v3 → v4 migration notes](#migrating-from-h3-v3) below.
 
 ## Installation
 
@@ -210,6 +210,73 @@ After a spatial join (detailed above), you can filter to only directly intersect
 [View Live Map on GitHub](docs/spatial_join.geojson)
 
 [![Result](https://github.com/kevinschaich/h3-pyspark/raw/master/docs/spatial_join.png)](docs/spatial_join.geojson)
+
+## Migrating from h3 v3
+
+H3 v4 introduced [significant renaming](https://h3geo.org/docs/library/migration-3.x/functions) across all function categories. This library now targets `h3>=4.0.0`.
+
+**Backward compatibility is preserved** — all original h3-pyspark function names (e.g. `geo_to_h3`, `k_ring`, `h3_to_parent`) continue to work. The v4-style names are also available as aliases.
+
+### Function name changes
+
+| Category | v3 name (still works) | v4 alias |
+|---|---|---|
+| Indexing | `geo_to_h3` | `latlng_to_cell` |
+| Indexing | `h3_to_geo` | `cell_to_latlng` |
+| Indexing | `h3_to_geo_boundary` | `cell_to_boundary` |
+| Inspection | `h3_get_resolution` | `get_resolution` |
+| Inspection | `h3_get_base_cell` | `get_base_cell_number` |
+| Inspection | `string_to_h3` / `h3_to_string` | `str_to_int` / `int_to_str` |
+| Inspection | `h3_is_valid` | `is_valid_cell` |
+| Inspection | `h3_is_pentagon` | `is_pentagon` |
+| Inspection | `h3_get_faces` | `get_icosahedron_faces` |
+| Traversal | `k_ring` | `grid_disk` |
+| Traversal | `hex_ring` | `grid_ring` |
+| Traversal | `h3_line` | `grid_path_cells` |
+| Traversal | `h3_distance` | `grid_distance` |
+| Traversal | `experimental_h3_to_local_ij` | `cell_to_local_ij` |
+| Traversal | `experimental_local_ij_to_h3` | `local_ij_to_cell` |
+| Hierarchy | `h3_to_parent` | `cell_to_parent` |
+| Hierarchy | `h3_to_children` | `cell_to_children` |
+| Hierarchy | `h3_to_center_child` | `cell_to_center_child` |
+| Hierarchy | `compact` / `uncompact` | `compact_cells` / `uncompact_cells` |
+| Regions | `polyfill` | `geo_to_cells` |
+| Regions | `h3_set_to_multi_polygon` | `cells_to_geo` |
+| Edges | `h3_indexes_are_neighbors` | `are_neighbor_cells` |
+| Edges | `get_h3_unidirectional_edge` | `cells_to_directed_edge` |
+| Edges | `h3_unidirectional_edge_is_valid` | `is_valid_directed_edge` |
+| Edges | `get_origin_h3_index_from_unidirectional_edge` | `get_directed_edge_origin` |
+| Edges | `get_destination_h3_index_from_unidirectional_edge` | `get_directed_edge_destination` |
+| Edges | `get_h3_indexes_from_unidirectional_edge` | `directed_edge_to_cells` |
+| Edges | `get_h3_unidirectional_edges_from_hexagon` | `origin_to_directed_edges` |
+| Edges | `get_h3_unidirectional_edge_boundary` | `directed_edge_to_boundary` |
+| Misc | `hex_area` | `average_hexagon_area` |
+| Misc | `edge_length` | `average_hexagon_edge_length` |
+| Misc | `exact_edge_length` | `edge_length` |
+| Misc | `num_hexagons` | `get_num_cells` |
+| Misc | `get_res0_indexes` | `get_res0_cells` |
+| Misc | `get_pentagon_indexes` | `get_pentagons` |
+| Misc | `point_dist` | `great_circle_distance` |
+
+### New functions in h3 v4
+
+The following UDFs are new in this release (no v3 equivalent):
+
+- `cell_to_vertex(h, vertex_num)` — get a specific vertex of a cell
+- `cell_to_vertexes(h)` — get all vertexes of a cell
+- `vertex_to_latlng(v)` — convert a vertex index to coordinates
+- `is_valid_vertex(v)` — validate a vertex index
+- `is_valid_index(h)` — validate any H3 index (cell, edge, or vertex)
+- `cell_to_child_pos(child, parent_res)` — position of a child cell within its parent
+- `cell_to_children_size(h, child_res)` — number of children at a given resolution
+- `child_pos_to_cell(parent, child_res, child_pos)` — child cell at a given position
+- `polygon_to_cells(geojson, res, flags)` — fill a GeoJSON polygon with cells
+
+### Behavior changes
+
+- **`polyfill` / `geo_to_cells`**: the `geo_json_conformant` parameter is accepted for backward compatibility but is now ignored — h3 v4 always uses GeoJSON `[lng, lat]` coordinate order.
+- **`h3_set_to_multi_polygon` / `cells_to_geo`**: h3 v4's `cells_to_geo` may return a `Polygon` for contiguous input cells; the wrapper normalizes this to `MultiPolygon` for backward compatibility.
+- **`k_ring_distances`, `hex_range`, `hex_range_distances`, `hex_ranges`**: these functions were removed from h3 v4 and are re-implemented internally using `grid_ring`.
 
 ## Publishing New Versions
 
